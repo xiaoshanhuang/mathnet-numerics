@@ -36,15 +36,21 @@ namespace MathNet.Numerics.Filtering.FIR
     /// FirCoefficients provides basic coefficient evaluation
     /// algorithms for the four most important filter types for
     /// Finite Impulse Response (FIR) Filters.
+    /// Default filter order estimation:
+    /// transition bandwidth is 25% of the lower passband edge, 
+    /// but not lower than 2 Hz, where possible (for bandpass, 
+    /// highpass, and bandstop) and distance from passband edge 
+    /// to critical frequency (DC, Nyquist) otherwise.
     /// </summary>
     public static class FirCoefficients
     {
+        
         /// <summary>
         /// Calculates FIR LowPass Filter Coefficients.
         /// </summary>
         /// <param name="samplingRate">Samples per unit.</param>
         /// <param name="cutoff">Cutoff frequency in samples per unit.</param>
-        /// <param name="halforder">halforder Q, so that Order N = 2*Q+1. Usually between 20 and 150.</param>
+        /// <param name="halforder">halforder Q, so that Order N = 2*Q+1. 0 for default.</param>
         /// <returns>The calculated filter coefficients.</returns>
         public static
         double[]
@@ -55,6 +61,16 @@ namespace MathNet.Numerics.Filtering.FIR
             )
         {
             double nu = 2d * cutoff / samplingRate; //normalized frequency
+            
+            // Default filter order
+            if (halforder == 0)
+            {
+                double TRANSWINDRATIO = 0.25;
+                double maxDf = samplingRate / 2 - cutoff;
+                double df = (cutoff * TRANSWINDRATIO > 2) ? cutoff * TRANSWINDRATIO : 2;
+                df = (df < maxDf) ? df : maxDf;
+                halforder = (int)Math.Ceiling(3.3 / (df / samplingRate) / 2);
+            }
             int order = 2 * halforder + 1;
             double[] c = new double[order];
             c[halforder] = nu;
@@ -72,7 +88,7 @@ namespace MathNet.Numerics.Filtering.FIR
         /// </summary>
         /// <param name="samplingRate">Samples per unit.</param>
         /// <param name="cutoff">Cutoff frequency in samples per unit.</param>
-        /// <param name="halforder">halforder Q, so that Order N = 2*Q+1</param>
+        /// <param name="halforder">halforder Q, so that Order N = 2*Q+1, 0 for default.</param>
         /// <returns>The calculated filter coefficients.</returns>
         public static
         double[]
@@ -83,6 +99,15 @@ namespace MathNet.Numerics.Filtering.FIR
             )
         {
             double nu = 2d * cutoff / samplingRate; //normalized frequency
+            // Default filter order
+            if (halforder == 0)
+            {
+                double TRANSWINDRATIO = 0.25;
+                double maxDf = cutoff;
+                double df = (maxDf * TRANSWINDRATIO > 2) ? maxDf * TRANSWINDRATIO : 2;
+                df = (df < maxDf) ? df : maxDf;
+                halforder = (int)Math.Ceiling(3.3 / (df / samplingRate) / 2);
+            }
             int order = 2 * halforder + 1;
             double[] c = new double[order];
             c[halforder] = 1 - nu;
@@ -101,7 +126,7 @@ namespace MathNet.Numerics.Filtering.FIR
         /// <param name="samplingRate">Samples per unit.</param>
         /// <param name="cutoffLow">Low Cutoff frequency in samples per unit.</param>
         /// <param name="cutoffHigh">High Cutoff frequency in samples per unit.</param>
-        /// <param name="halforder">halforder Q, so that Order N = 2*Q+1</param>
+        /// <param name="halforder">halforder Q, so that Order N = 2*Q+1, 0 for default.</param>
         /// <returns>The calculated filter coefficients.</returns>
         public static
         double[]
@@ -114,6 +139,15 @@ namespace MathNet.Numerics.Filtering.FIR
         {
             double nu1 = 2d * cutoffLow / samplingRate; //normalized low frequency
             double nu2 = 2d * cutoffHigh / samplingRate; //normalized high frequency
+            // Default filter order
+            if (halforder == 0)
+            {
+                double TRANSWINDRATIO = 0.25;
+                double maxDf = (cutoffLow < samplingRate / 2 - cutoffHigh) ? cutoffLow : samplingRate / 2 - cutoffHigh;
+                double df = (cutoffLow * TRANSWINDRATIO > 2) ? cutoffLow * TRANSWINDRATIO : 2;
+                df = (df < maxDf) ? df : maxDf;
+                halforder = (int)Math.Ceiling(3.3 / (df / samplingRate) / 2);
+            }
             int order = 2 * halforder + 1;
             double[] c = new double[order];
             c[halforder] = nu2 - nu1;
@@ -132,7 +166,7 @@ namespace MathNet.Numerics.Filtering.FIR
         /// <param name="samplingRate">Samples per unit.</param>
         /// <param name="cutoffLow">Low Cutoff frequency in samples per unit.</param>
         /// <param name="cutoffHigh">High Cutoff frequency in samples per unit.</param>
-        /// <param name="halforder">halforder Q, so that Order N = 2*Q+1</param>
+        /// <param name="halforder">halforder Q, so that Order N = 2*Q+1, 0 for default.</param>
         /// <returns>The calculated filter coefficients.</returns>
         public static
         double[]
@@ -145,6 +179,15 @@ namespace MathNet.Numerics.Filtering.FIR
         {
             double nu1 = 2d * cutoffLow / samplingRate; //normalized low frequency
             double nu2 = 2d * cutoffHigh / samplingRate; //normalized high frequency
+            // Default filter order
+            if (halforder == 0)
+            {
+                double TRANSWINDRATIO = 0.25;
+                double maxDf = (cutoffHigh - cutoffLow) / 2;
+                double df = (maxDf * TRANSWINDRATIO > 2) ? maxDf * TRANSWINDRATIO : 2;
+                df = (df < maxDf) ? df : maxDf;
+                halforder = (int)Math.Ceiling(3.3 / (df / samplingRate) / 2);
+            }
             int order = 2 * halforder + 1;
             double[] c = new double[order];
             c[halforder] = 1 - (nu2 - nu1);
